@@ -14,12 +14,17 @@ export default function HealthPage() {
   };
   const [results, setResults] = useState<Resp[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [checkedAt, setCheckedAt] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Prefer proxy via Next.js rewrites (see next.config.mjs)
-    const urls = ['/api/healthz', '/api/health'];
-    Promise.all(
-      urls.map(async (u): Promise<Resp> => {
+  const run = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const urls = ['/api/healthz', '/api/health'];
+      const out: Resp[] = [];
+      for (const u of urls) {
         try {
           const res = await fetch(u, { cache: 'no-store' });
           const ctype = res.headers.get('content-type');
@@ -28,70 +33,119 @@ export default function HealthPage() {
             data = await res.json();
           } else {
             const text = await res.text();
-            data = text.slice(0, 200);
+            data = text.slice(0, 500);
           }
-          return {
+          out.push({
             url: u,
             ok: res.ok,
             status: res.status,
             statusText: res.statusText,
             contentType: ctype,
             data,
-          };
+          });
         } catch (e: any) {
-          return {
+          out.push({
             url: u,
             ok: false,
             status: 0,
             statusText: 'NETWORK/JS ERROR',
             error: String(e?.message || e),
-          };
+          });
         }
-      }),
-    )
-      .then(setResults)
-      .catch((err) => setError(String(err)));
-  }, []);
+      }
+      setResults(out);
+      setCheckedAt(new Date().toLocaleString());
+    } catch (e: any) {
+      setError(String(e?.message || e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { run(); }, []);
+
+  const labelOf = (u: string) => (u.includes('healthz') ? 'Healthz' : 'Health');
+  const statusClass = (r: Resp) => {
+    if (!r.ok) return 'err';
+    if (!r.contentType || !r.contentType.includes('application/json')) return 'warn';
+    return 'ok';
+  };
+  const toggle = (key: string) => setExpanded((s) => ({ ...s, [key]: !s[key] }));
 
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Health Check</h1>
-      <p>API (proxied): /api → {process.env.NEXT_PUBLIC_API_URL || '(not set)'}</p>
-      <p>WS: {process.env.NEXT_PUBLIC_WS_URL || '(not set)'}</p>
-      {error && <pre style={{ color: 'crimson' }}>{error}</pre>}
-      {results ? (
-        <section>
-          {results.map((r) => (
-            <div key={r.url} style={{ margin: '12px 0', padding: 12, border: '1px solid #ddd' }}>
-              <div>
-                <strong>Request:</strong> <code>{r.url}</code>
+    <main className="container">
+      <header className="row" style={{ justifyContent: 'space-between' }}>
+        <div>
+          <h1 style={{ margin: '0 0 4px' }}>System Health</h1>
+          <div className="muted" style={{ fontSize: 14 }}>
+            REST via proxy: <code>/api → {process.env.NEXT_PUBLIC_API_URL || '(not set)'}</code>
+          </div>
+        </div>
+        <div className="row">
+          <button className="btn secondary" onClick={run} disabled={loading}>
+            {loading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
+      </header>
+
+      <div className="space" />
+      <div className="muted" style={{ fontSize: 13 }}>
+        {checkedAt ? `Last checked: ${checkedAt}` : 'Checking…'}
+      </div>
+
+      <div className="space" />
+      {error && <pre style={{ color: '#ef4444' }}>{error}</pre>}
+
+      <section className="grid">
+        {(results || []).map((r) => {
+          const sc = statusClass(r);
+          const key = r.url;
+          const isOpen = !!expanded[key];
+          return (
+            <div key={key} className="card">
+              <div className="row" style={{ justifyContent: 'space-between' }}>
+                <div className="row">
+                  <span className={`dot ${sc}`} />
+                  <strong>{labelOf(r.url)}</strong>
+                </div>
+                <div className="muted" style={{ fontSize: 13 }}>
+                  {r.status} {r.statusText}
+                </div>
               </div>
-              <div>
-                <strong>Status:</strong> {r.status} {r.statusText} {r.ok ? '✅' : '❌'}
+              <div className="space" />
+              <div className="muted" style={{ fontSize: 13 }}>
+                <code>{r.url}</code>
               </div>
               {r.contentType && (
-                <div>
-                  <strong>Content-Type:</strong> {r.contentType}
+                <div className="muted" style={{ fontSize: 13, marginTop: 6 }}>
+                  Content-Type: {r.contentType}
                 </div>
               )}
-              {r.error ? (
-                <pre style={{ color: 'crimson', whiteSpace: 'pre-wrap' }}>{r.error}</pre>
-              ) : (
-                <pre style={{ whiteSpace: 'pre-wrap' }}>{
-                  typeof r.data === 'string' ? r.data : JSON.stringify(r.data, null, 2)
-                }</pre>
-              )}
-              <div>
-                <a href={r.url} target="_blank" rel="noreferrer">
+              <div className="space" />
+              <div className="row" style={{ gap: 10 }}>
+                <a className="btn secondary" href={r.url} target="_blank" rel="noreferrer">
                   Open raw
                 </a>
+                <button className="btn" onClick={() => toggle(key)}>
+                  {isOpen ? 'Hide details' : 'Show details'}
+                </button>
               </div>
+
+              {isOpen && (
+                <div style={{ marginTop: 12 }}>
+                  {r.error ? (
+                    <pre style={{ color: '#ef4444', whiteSpace: 'pre-wrap' }}>{r.error}</pre>
+                  ) : (
+                    <pre style={{ whiteSpace: 'pre-wrap' }}>
+                      {typeof r.data === 'string' ? r.data : JSON.stringify(r.data, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              )}
             </div>
-          ))}
-        </section>
-      ) : (
-        <p>Loading…</p>
-      )}
+          );
+        })}
+      </section>
     </main>
   );
 }
