@@ -1,6 +1,12 @@
 .next/
 node_modules/
 .env*
+!.env.local.example
 dist/
 coverage/
 
+# Platform
+.vercel/
+
+# macOS
+.DS_Store
