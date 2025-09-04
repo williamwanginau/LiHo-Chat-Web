@@ -7,9 +7,25 @@ export default function HealthPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/healthz`;
+    const base = process.env.NEXT_PUBLIC_API_URL;
+    if (!base) {
+      setError('Missing env: NEXT_PUBLIC_API_URL');
+      return;
+    }
+    const url = `${base.replace(/\/$/, '')}/healthz`;
     fetch(url)
-      .then((res) => res.json())
+      .then(async (res) => {
+        const ctype = res.headers.get('content-type') || '';
+        if (!res.ok) {
+          const body = await res.text().catch(() => '');
+          throw new Error(`HTTP ${res.status} ${res.statusText}: ${body.slice(0, 200)}`);
+        }
+        if (!ctype.includes('application/json')) {
+          const body = await res.text().catch(() => '');
+          throw new Error(`Expected JSON, got '${ctype}'. Body: ${body.slice(0, 200)}`);
+        }
+        return res.json();
+      })
       .then(setData)
       .catch((err) => setError(String(err)));
   }, []);
@@ -17,10 +33,9 @@ export default function HealthPage() {
   return (
     <main style={{ padding: 24 }}>
       <h1>Health Check</h1>
-      <p>API: {process.env.NEXT_PUBLIC_API_URL}</p>
+      <p>API: {process.env.NEXT_PUBLIC_API_URL || '(not set)'}</p>
       {error && <pre style={{ color: 'crimson' }}>{error}</pre>}
       {data ? <pre>{JSON.stringify(data, null, 2)}</pre> : <p>Loading…</p>}
     </main>
   );
 }
-
