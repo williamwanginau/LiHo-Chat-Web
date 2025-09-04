@@ -7,12 +7,8 @@ export default function HealthPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL;
-    if (!base) {
-      setError('Missing env: NEXT_PUBLIC_API_URL');
-      return;
-    }
-    const url = `${base.replace(/\/$/, '')}/healthz`;
+    // Prefer proxy via Next.js rewrites (see next.config.mjs)
+    const url = `/api/healthz`;
     fetch(url)
       .then(async (res) => {
         const ctype = res.headers.get('content-type') || '';
@@ -33,7 +29,7 @@ export default function HealthPage() {
   return (
     <main style={{ padding: 24 }}>
       <h1>Health Check</h1>
-      <p>API: {process.env.NEXT_PUBLIC_API_URL || '(not set)'}</p>
+      <p>API (proxied): /api → {process.env.NEXT_PUBLIC_API_URL || '(not set)'}</p>
       {error && <pre style={{ color: 'crimson' }}>{error}</pre>}
       {data ? <pre>{JSON.stringify(data, null, 2)}</pre> : <p>Loading…</p>}
     </main>
