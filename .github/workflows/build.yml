@@ -15,19 +15,12 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
-          cache-dependency-path: web/package-lock.json
       - name: Install dependencies
-        working-directory: ./
-        run: |
-          cd web
-          npm ci || npm install
+        run: npm ci || npm install
       - name: Type check
-        working-directory: ./web
         run: npx tsc --noEmit
       - name: Build
-        working-directory: ./web
         env:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_WS_URL: ${{ vars.NEXT_PUBLIC_WS_URL }}
         run: npm run build
-
