@@ -22,7 +22,7 @@ export default function HealthPage() {
     setLoading(true);
     setError(null);
     try {
-      const urls = ['/api/healthz', '/api/health'];
+      const urls = ['/api/livez', '/api/readyz'];
       const out: Resp[] = [];
       for (const u of urls) {
         try {
@@ -64,7 +64,7 @@ export default function HealthPage() {
 
   useEffect(() => { run(); }, []);
 
-  const labelOf = (u: string) => (u.includes('healthz') ? 'Healthz' : 'Health');
+  const labelOf = (u: string) => (u.includes('livez') ? 'Live' : 'Ready');
   const statusClass = (r: Resp) => {
     if (!r.ok) return 'err';
     if (!r.contentType || !r.contentType.includes('application/json')) return 'warn';
