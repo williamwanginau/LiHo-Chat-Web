@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function HealthPage() {
   type Resp = {
@@ -27,7 +27,7 @@ export default function HealthPage() {
     }
   };
 
-  const run = async () => {
+  const run = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -69,9 +69,9 @@ export default function HealthPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { run(); }, []);
+  useEffect(() => { run(); }, [run]);
 
   const labelOf = (u: string) => (u.includes('livez') ? 'Live' : 'Ready');
   const statusClass = (r: Resp) => {
