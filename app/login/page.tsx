@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
+import { toast } from 'react-hot-toast';
 import type { ApiError } from '../../lib/api';
 
 type DemoUser = { label: string; email: string; password: string };
@@ -63,16 +64,25 @@ export default function LoginPage() {
       setError(null);
       try {
         await login(email, password);
+        toast.success('Signed in');
         router.replace('/app');
       } catch (err) {
         const anyErr = err as ApiError;
-        if (anyErr?.status === 401) setError('Invalid email or password');
-        else if (anyErr?.status === 403) setError('Account disabled');
+        if (anyErr?.status === 401) {
+          setError('Invalid email or password');
+          toast.error('Invalid email or password');
+        }
+        else if (anyErr?.status === 403) {
+          setError('Account disabled');
+          toast.error('Account disabled');
+        }
         else if (anyErr?.status === 429) {
           setError('Too many attempts, please try again later');
           setCooldown(10);
+          toast.error('Too many attempts, please try again later');
         } else if (anyErr?.isTimeout) {
           setError('Request timed out. The server may be waking up. Please try again shortly.');
+          toast('Server is waking up, please try again shortly', { icon: '⏳' });
         } else setError(`Login failed: ${anyErr?.message ?? 'Unknown error'}`);
       } finally {
         setSubmitting(false);
@@ -121,7 +131,7 @@ export default function LoginPage() {
         </label>
 
         {error && <div style={{ color: '#ef4444', fontSize: 14 }}>{error}</div>}
-        <button type="submit" disabled={submitting || cooldown > 0} style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6 }}>
+        <button type="submit" className="btn" disabled={submitting || cooldown > 0}>
           {submitting ? 'Signing in…' : cooldown > 0 ? `Try again in ${cooldown}s` : 'Sign in'}
         </button>
       </form>

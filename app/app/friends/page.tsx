@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { useMock } from '../../../lib/mock';
+import { toast } from 'react-hot-toast';
 
 export default function FriendsPage() {
   const { friends, addFriend } = useMock();
@@ -17,9 +18,11 @@ export default function FriendsPage() {
       const res = addFriend(email);
       if (res.ok) {
         setOk('Friend added');
+        toast.success('Friend added');
         setEmail('');
       } else {
         setError(res.error);
+        toast.error(res.error);
       }
     },
     [email, addFriend],
@@ -51,9 +54,7 @@ export default function FriendsPage() {
           />
         </label>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button type="submit" style={{ border: '1px solid #d1d5db', padding: '6px 10px', borderRadius: 6 }}>
-            Add
-          </button>
+          <button type="submit" className="btn">Add</button>
           {ok && <span style={{ color: '#16a34a', fontSize: 13 }}>{ok}</span>}
           {error && <span style={{ color: '#ef4444', fontSize: 13 }}>{error}</span>}
         </div>

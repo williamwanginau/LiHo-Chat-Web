@@ -24,18 +24,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Provide token to axios from localStorage provider to avoid race conditions
-  // (e.g., immediately calling /auth/me right after setToken before effect flushes)
-  useEffect(() => {
-    setAuthTokenProvider(() => {
-      if (typeof window === 'undefined') return null;
-      try {
-        return window.localStorage.getItem('liho.accessToken');
-      } catch {
-        return null;
-      }
-    });
-  }, []);
+  // Axios already reads token from localStorage via its default token provider (lib/api.ts)
+  // No need to override here; keep provider logic centralized.
 
   const bootstrap = useCallback(async () => {
     // Load token from localStorage once on mount

@@ -16,6 +16,7 @@ export type ChatSummary = {
   isDM: boolean;
   updatedAt: string;
   lastMessage?: string;
+  unread?: number;
 };
 
 export type Message = {
@@ -30,6 +31,7 @@ type MockContextValue = {
   friends: Friend[];
   chats: ChatSummary[];
   messagesByChatId: Record<string, Message[]>;
+  addMessage: (chatId: string, userId: string, content: string) => void;
   addFriend: (email: string) => { ok: true } | { ok: false; error: string };
 };
 
@@ -74,6 +76,7 @@ function seedForUser(user: AuthUser) {
       isDM: true,
       updatedAt: messages[messages.length - 1].createdAt,
       lastMessage: messages[messages.length - 1].content,
+      unread: 2,
     },
     {
       id: 'room:public',
@@ -81,13 +84,81 @@ function seedForUser(user: AuthUser) {
       isDM: false,
       updatedAt: new Date(now.getTime() - 10_000).toISOString(),
       lastMessage: 'Welcome to the public room!',
+      unread: 0,
+    },
+    // Additional mock chats for UI testing
+    {
+      id: 'team:design',
+      title: 'Design Team',
+      isDM: false,
+      updatedAt: new Date(now.getTime() - 45 * 60_000).toISOString(), // 45 minutes ago (same day)
+      lastMessage: 'Please review the new mockups',
+      unread: 1,
+    },
+    {
+      id: 'team:eng',
+      title: 'Engineering',
+      isDM: false,
+      updatedAt: new Date(now.getTime() - 3 * 60 * 60_000).toISOString(), // 3 hours ago (AM/PM)
+      lastMessage: 'Ship it! 🚀',
+      unread: 12,
+    },
+    {
+      id: 'team:mkt',
+      title: 'Marketing',
+      isDM: false,
+      updatedAt: new Date(now.getTime() - 26 * 60 * 60_000).toISOString(), // ~1 day ago (Yesterday)
+      lastMessage: 'Campaign CTR looks good',
+      unread: 0,
+    },
+    {
+      id: 'team:allhands',
+      title: 'All Hands',
+      isDM: false,
+      updatedAt: new Date(now.getTime() - 2 * 24 * 60 * 60_000 - 60 * 60_000).toISOString(), // ~2 days ago (weekday)
+      lastMessage: 'Slides are uploaded',
+      unread: 3,
+    },
+    {
+      id: 'guild:frontend',
+      title: 'Frontend Guild',
+      isDM: false,
+      updatedAt: new Date(now.getTime() - 5 * 24 * 60 * 60_000).toISOString(), // 5 days ago (weekday)
+      lastMessage: 'React 19 notes',
+      unread: 57,
+    },
+    {
+      id: 'room:support',
+      title: 'Support',
+      isDM: false,
+      updatedAt: new Date(now.getTime() - 8 * 24 * 60 * 60_000).toISOString(), // 8 days (date)
+      lastMessage: 'Ticket #12345 resolved',
+      unread: 1203,
+    },
+    {
+      id: 'room:random',
+      title: 'Random',
+      isDM: false,
+      updatedAt: new Date(now.getTime() - 15 * 24 * 60 * 60_000).toISOString(), // 15 days (date)
+      lastMessage: 'Friday memes',
+      unread: 0,
     },
   ];
 
   return {
     friends: [other],
     chats,
-    messagesByChatId: { [dmId]: messages, 'room:public': [] },
+    messagesByChatId: {
+      [dmId]: messages,
+      'room:public': [],
+      'team:design': [],
+      'team:eng': [],
+      'team:mkt': [],
+      'team:allhands': [],
+      'guild:frontend': [],
+      'room:support': [],
+      'room:random': [],
+    },
   } satisfies Pick<MockContextValue, 'friends' | 'chats' | 'messagesByChatId'>;
 }
 
@@ -142,9 +213,31 @@ export function MockDataProvider({ children }: { children: React.ReactNode }) {
     [user, friends],
   );
 
+  const addMessage = useCallback(
+    (chatId: string, userId: string, content: string) => {
+      const msg: Message = {
+        id: `m-${Date.now()}`,
+        chatId,
+        userId,
+        content,
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((m) => {
+        const prev = m[chatId] ?? [];
+        return { ...m, [chatId]: [...prev, msg] };
+      });
+      setChats((cs) => {
+        const out = cs.map((c) => (c.id === chatId ? { ...c, lastMessage: content, updatedAt: msg.createdAt } : c));
+        out.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+        return [...out];
+      });
+    },
+    [],
+  );
+
   const value = useMemo<MockContextValue>(
-    () => ({ friends, chats, messagesByChatId, addFriend }),
-    [friends, chats, messagesByChatId, addFriend],
+    () => ({ friends, chats, messagesByChatId, addMessage, addFriend }),
+    [friends, chats, messagesByChatId, addMessage, addFriend],
   );
 
   return <MockContext.Provider value={value}>{children}</MockContext.Provider>;

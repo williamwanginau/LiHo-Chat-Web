@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
 import { MockDataProvider } from '../../lib/mock';
+import { ChatUIProvider } from '../../lib/chat-ui';
+import LeftRail from '../../components/LeftRail';
+import Sidebar from '../../components/Sidebar';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { token, user, loading, logout } = useAuth();
@@ -21,19 +24,21 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
 
   return (
     <MockDataProvider>
-      <div>
-        <header style={{ display: 'flex', gap: 12, padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-          <nav style={{ display: 'flex', gap: 12 }}>
-            <Link href="/app/chats">Chats</Link>
-            <Link href="/app/friends">Friends</Link>
-          </nav>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
-            <span style={{ fontSize: 12, color: '#6b7280' }}>{user.name}</span>
-            <button onClick={logout} style={{ border: '1px solid #d1d5db', padding: '4px 8px', borderRadius: 6 }}>Logout</button>
-          </div>
-        </header>
-        <div>{children}</div>
-      </div>
+      <ChatUIProvider>
+        <div className="app-shell">
+          <LeftRail />
+          <Sidebar />
+          <main className="main">
+            <div className="topbar">
+              <div className="muted" style={{ fontSize: 12 }}>Signed in as {user.name}</div>
+              <div style={{ marginLeft: 'auto' }}>
+                <button onClick={logout} className="btn secondary">Logout</button>
+              </div>
+            </div>
+            {children}
+          </main>
+        </div>
+      </ChatUIProvider>
     </MockDataProvider>
   );
 }
