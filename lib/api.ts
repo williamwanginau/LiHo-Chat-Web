@@ -39,14 +39,22 @@ export type ApiError = {
 
 function toApiError(err: unknown): ApiError {
   if (axios.isAxiosError(err)) {
-    const e = err as AxiosError<any>;
+    const e = err as AxiosError<unknown>;
     const status = e.response?.status ?? null;
-    const msg = (e.response?.data as any)?.message || e.message || 'Request error';
+    const data = e.response?.data as unknown;
+    let message = e.message || 'Request error';
+    let code: string | undefined = undefined;
+    if (data && typeof data === 'object') {
+      const maybeMsg = (data as { message?: unknown }).message;
+      if (typeof maybeMsg === 'string') message = maybeMsg;
+      const maybeCode = (data as { code?: unknown }).code;
+      if (typeof maybeCode === 'string') code = maybeCode;
+    }
     return {
       status,
-      message: String(msg),
-      code: (e.response?.data as any)?.code,
-      data: e.response?.data,
+      message: String(message),
+      code,
+      data,
       isNetworkError: !!e.isAxiosError && !e.response,
       isTimeout: e.code === 'ECONNABORTED',
     };
@@ -120,4 +128,3 @@ export type AuthUser = {
   updatedAt: string;
   lastLoginAt: string | null;
 };
-
