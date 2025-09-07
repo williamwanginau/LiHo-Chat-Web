@@ -16,7 +16,7 @@ export default function FriendsPage() {
       setOk(null);
       const res = addFriend(email);
       if (res.ok) {
-        setOk('已加入好友');
+        setOk('Friend added');
         setEmail('');
       } else {
         setError(res.error);
@@ -35,24 +35,24 @@ export default function FriendsPage() {
             <div className="muted" style={{ fontSize: 13, color: '#6b7280' }}>{f.email}</div>
           </li>
         ))}
-        {friends.length === 0 && <li className="muted">尚無好友</li>}
+        {friends.length === 0 && <li className="muted">No friends yet</li>}
       </ul>
 
       <form onSubmit={onSubmit} style={{ display: 'grid', gap: 8, maxWidth: 380 }}>
         <label style={{ display: 'grid', gap: 6 }}>
-          <span style={{ fontSize: 13, color: '#6b7280' }}>加入好友（demo 僅支援 alice/bob）</span>
+          <span style={{ fontSize: 13, color: '#6b7280' }}>Add friend (demo supports only alice/bob)</span>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="對方 email"
+            placeholder="Friend email"
             required
             style={{ padding: 8, borderRadius: 6, border: '1px solid #d1d5db' }}
           />
         </label>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button type="submit" style={{ border: '1px solid #d1d5db', padding: '6px 10px', borderRadius: 6 }}>
-            加入
+            Add
           </button>
           {ok && <span style={{ color: '#16a34a', fontSize: 13 }}>{ok}</span>}
           {error && <span style={{ color: '#ef4444', fontSize: 13 }}>{error}</span>}

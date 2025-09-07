@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
+import type { ApiError } from '../../lib/api';
 
 type DemoUser = { label: string; email: string; password: string };
 
@@ -12,8 +13,8 @@ export default function LoginPage() {
 
   const demos: DemoUser[] = useMemo(
     () => [
-      { label: 'Alice', email: 'alice@example.com', password: 'demo' },
-      { label: 'Bob', email: 'bob@example.com', password: 'demo' },
+      { label: 'Alice', email: 'alice@example.com', password: 'demopass123' },
+      { label: 'Bob', email: 'bob@example.com', password: 'demopass123' },
     ],
     [],
   );
@@ -36,6 +37,24 @@ export default function LoginPage() {
     return () => clearInterval(t);
   }, [cooldown]);
 
+  // Pre-warm backend on login page to mitigate cold start latency
+  useEffect(() => {
+    let aborted = false;
+    const ctl = new AbortController();
+    const warm = async () => {
+      try {
+        await fetch('/api/livez', { signal: ctl.signal, cache: 'no-store' });
+      } catch {
+        // ignore
+      }
+    };
+    if (!loading && !token) warm();
+    return () => {
+      aborted = true;
+      ctl.abort();
+    };
+  }, [loading, token]);
+
   const onSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -46,13 +65,15 @@ export default function LoginPage() {
         await login(email, password);
         router.replace('/app');
       } catch (err) {
-        const anyErr = err as { status?: number | null; message?: string };
-        if (anyErr?.status === 401) setError('帳號或密碼錯誤');
-        else if (anyErr?.status === 403) setError('帳號已停用');
+        const anyErr = err as ApiError;
+        if (anyErr?.status === 401) setError('Invalid email or password');
+        else if (anyErr?.status === 403) setError('Account disabled');
         else if (anyErr?.status === 429) {
-          setError('操作過於頻繁，請稍後再試');
+          setError('Too many attempts, please try again later');
           setCooldown(10);
-        } else setError(`登入失敗：${anyErr?.message ?? '未知錯誤'}`);
+        } else if (anyErr?.isTimeout) {
+          setError('Request timed out. The server may be waking up. Please try again shortly.');
+        } else setError(`Login failed: ${anyErr?.message ?? 'Unknown error'}`);
       } finally {
         setSubmitting(false);
       }
@@ -107,4 +128,3 @@ export default function LoginPage() {
     </main>
   );
 }
-

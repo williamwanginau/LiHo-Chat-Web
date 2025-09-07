@@ -65,7 +65,8 @@ function toApiError(err: unknown): ApiError {
 // Single axios instance routed through Next rewrites (/api -> NEXT_PUBLIC_API_URL)
 export const api: AxiosInstance = axios.create({
   baseURL: '/api',
-  timeout: 10_000,
+  // Free-tier backends (e.g., Render) may cold start; allow up to 30s
+  timeout: 30_000,
   headers: { 'Content-Type': 'application/json' },
 });
 

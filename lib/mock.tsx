@@ -109,16 +109,16 @@ export function MockDataProvider({ children }: { children: React.ReactNode }) {
   const addFriend = useCallback(
     (email: string) => {
       const e = email.trim().toLowerCase();
-      if (!user) return { ok: false as const, error: '尚未登入' };
-      if (e === user.email.toLowerCase()) return { ok: false as const, error: '不能加自己為好友' };
+      if (!user) return { ok: false as const, error: 'Not signed in' };
+      if (e === user.email.toLowerCase()) return { ok: false as const, error: 'Cannot add yourself as a friend' };
       const allowed = ['alice@example.com', 'bob@example.com'];
-      if (!allowed.includes(e)) return { ok: false as const, error: '使用者不存在（demo 限制）' };
-      if (friends.some((f) => f.email.toLowerCase() === e)) return { ok: false as const, error: '已在好友名單' };
+      if (!allowed.includes(e)) return { ok: false as const, error: 'User does not exist (demo restriction)' };
+      if (friends.some((f) => f.email.toLowerCase() === e)) return { ok: false as const, error: 'Already in friends list' };
       const newFriend: Friend = e === 'alice@example.com'
         ? { id: 'u-alice', email: 'alice@example.com', name: 'Alice' }
         : { id: 'u-bob', email: 'bob@example.com', name: 'Bob' };
       setFriends((s) => [...s, newFriend]);
-      // 可選：建立對應 DM 項目
+      // Optional: create corresponding DM entry
       const a = user.email.toLowerCase() < e ? user.email.split('@')[0] : newFriend.name.toLowerCase();
       const b = user.email.toLowerCase() < e ? newFriend.name.toLowerCase() : user.email.split('@')[0];
       const dmId = `dm:${a}:${b}`;
@@ -149,4 +149,3 @@ export function MockDataProvider({ children }: { children: React.ReactNode }) {
 
   return <MockContext.Provider value={value}>{children}</MockContext.Provider>;
 }
-
