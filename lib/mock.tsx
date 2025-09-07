@@ -10,11 +10,12 @@ export type Friend = {
   name: string;
 };
 
-export type ChatSummary = {
+export type RoomType = 'DM' | 'GROUP';
+export type RoomListItem = {
   id: string;
-  title: string;
-  isDM: boolean;
-  updatedAt: string;
+  name: string;
+  type: RoomType;
+  updatedAt: string; // ISO string
   lastMessage?: string;
   unread?: number;
 };
@@ -25,11 +26,12 @@ export type Message = {
   userId: string;
   content: string;
   createdAt: string;
+  readAt?: string | null;
 };
 
 type MockContextValue = {
   friends: Friend[];
-  chats: ChatSummary[];
+  chats: RoomListItem[];
   messagesByChatId: Record<string, Message[]>;
   addMessage: (chatId: string, userId: string, content: string) => void;
   addFriend: (email: string) => { ok: true } | { ok: false; error: string };
@@ -69,19 +71,19 @@ function seedForUser(user: AuthUser) {
     },
   ];
 
-  const chats: ChatSummary[] = [
+  const chats: RoomListItem[] = [
     {
       id: dmId,
-      title: other.name,
-      isDM: true,
+      name: other.name,
+      type: 'DM',
       updatedAt: messages[messages.length - 1].createdAt,
       lastMessage: messages[messages.length - 1].content,
       unread: 2,
     },
     {
       id: 'room:public',
-      title: 'Public Room',
-      isDM: false,
+      name: 'Public Room',
+      type: 'GROUP',
       updatedAt: new Date(now.getTime() - 10_000).toISOString(),
       lastMessage: 'Welcome to the public room!',
       unread: 0,
@@ -89,56 +91,56 @@ function seedForUser(user: AuthUser) {
     // Additional mock chats for UI testing
     {
       id: 'team:design',
-      title: 'Design Team',
-      isDM: false,
+      name: 'Design Team',
+      type: 'GROUP',
       updatedAt: new Date(now.getTime() - 45 * 60_000).toISOString(), // 45 minutes ago (same day)
       lastMessage: 'Please review the new mockups',
       unread: 1,
     },
     {
       id: 'team:eng',
-      title: 'Engineering',
-      isDM: false,
+      name: 'Engineering',
+      type: 'GROUP',
       updatedAt: new Date(now.getTime() - 3 * 60 * 60_000).toISOString(), // 3 hours ago (AM/PM)
       lastMessage: 'Ship it! 🚀',
       unread: 12,
     },
     {
       id: 'team:mkt',
-      title: 'Marketing',
-      isDM: false,
+      name: 'Marketing',
+      type: 'GROUP',
       updatedAt: new Date(now.getTime() - 26 * 60 * 60_000).toISOString(), // ~1 day ago (Yesterday)
       lastMessage: 'Campaign CTR looks good',
       unread: 0,
     },
     {
       id: 'team:allhands',
-      title: 'All Hands',
-      isDM: false,
+      name: 'All Hands',
+      type: 'GROUP',
       updatedAt: new Date(now.getTime() - 2 * 24 * 60 * 60_000 - 60 * 60_000).toISOString(), // ~2 days ago (weekday)
       lastMessage: 'Slides are uploaded',
       unread: 3,
     },
     {
       id: 'guild:frontend',
-      title: 'Frontend Guild',
-      isDM: false,
+      name: 'Frontend Guild',
+      type: 'GROUP',
       updatedAt: new Date(now.getTime() - 5 * 24 * 60 * 60_000).toISOString(), // 5 days ago (weekday)
       lastMessage: 'React 19 notes',
       unread: 57,
     },
     {
       id: 'room:support',
-      title: 'Support',
-      isDM: false,
+      name: 'Support',
+      type: 'GROUP',
       updatedAt: new Date(now.getTime() - 8 * 24 * 60 * 60_000).toISOString(), // 8 days (date)
       lastMessage: 'Ticket #12345 resolved',
       unread: 1203,
     },
     {
       id: 'room:random',
-      title: 'Random',
-      isDM: false,
+      name: 'Random',
+      type: 'GROUP',
       updatedAt: new Date(now.getTime() - 15 * 24 * 60 * 60_000).toISOString(), // 15 days (date)
       lastMessage: 'Friday memes',
       unread: 0,
@@ -165,7 +167,7 @@ function seedForUser(user: AuthUser) {
 export function MockDataProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [chats, setChats] = useState<ChatSummary[]>([]);
+  const [chats, setChats] = useState<RoomListItem[]>([]);
   const [messagesByChatId, setMessages] = useState<Record<string, Message[]>>({});
 
   // Seed when user changes
@@ -200,8 +202,8 @@ export function MockDataProvider({ children }: { children: React.ReactNode }) {
               ...s,
               {
                 id: dmId,
-                title: newFriend.name,
-                isDM: true,
+                name: newFriend.name,
+                type: 'DM',
                 updatedAt: new Date().toISOString(),
                 lastMessage: 'Say hi!'
               },

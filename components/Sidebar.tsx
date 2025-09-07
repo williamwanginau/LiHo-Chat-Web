@@ -15,7 +15,7 @@ export default function Sidebar() {
     const v = q.trim().toLowerCase();
     const xs = [...chats].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
     if (!v) return xs;
-    return xs.filter((c) => c.title.toLowerCase().includes(v));
+    return xs.filter((c) => c.name.toLowerCase().includes(v));
   }, [q, chats]);
   const listRef = useRef<HTMLDivElement>(null);
   useSmartScrollbar(listRef, { hoverMs: 1000, scrollMs: 300 });
@@ -38,7 +38,7 @@ export default function Sidebar() {
           return (
             <button key={c.id} className={`chat-item ${active ? 'active' : ''}`} onClick={() => setSelectedChatId(c.id)}>
               <div className="chat-text">
-                <div className="chat-title">{c.title}</div>
+                <div className="chat-title">{c.name}</div>
                 {c.lastMessage && <div className="chat-sub">{c.lastMessage}</div>}
               </div>
               <div className="chat-meta">

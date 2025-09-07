@@ -157,4 +157,11 @@ pre {
   padding: 12px;
   overflow: auto;
 }
-.material-symbols-outlined { line-height: 1; }
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-feature-settings: 'liga';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
+  visibility: hidden; /* avoid FOUT of text before font loads */
+}
+.icons-ready .material-symbols-outlined { visibility: visible; }

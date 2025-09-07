@@ -11,7 +11,7 @@ export default function ChatHeader() {
   return (
     <div className="chat-header">
       <div className="chat-header-title">
-        <strong>{chat?.title ?? 'Select a chat'}</strong>
+        <strong>{chat?.name ?? 'Select a chat'}</strong>
       </div>
       <div className="chat-header-actions">
         <button className="icon-btn" aria-label="Search in conversation">
@@ -24,4 +24,3 @@ export default function ChatHeader() {
     </div>
   );
 }
-
