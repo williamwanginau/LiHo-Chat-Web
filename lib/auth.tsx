@@ -24,10 +24,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Provide token to axios from memory (preferred over reading localStorage every time)
+  // Provide token to axios from localStorage provider to avoid race conditions
+  // (e.g., immediately calling /auth/me right after setToken before effect flushes)
   useEffect(() => {
-    setAuthTokenProvider(() => token);
-  }, [token]);
+    setAuthTokenProvider(() => {
+      if (typeof window === 'undefined') return null;
+      try {
+        return window.localStorage.getItem('liho.accessToken');
+      } catch {
+        return null;
+      }
+    });
+  }, []);
 
   const bootstrap = useCallback(async () => {
     // Load token from localStorage once on mount
@@ -75,4 +83,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AuthContextValue>(() => ({ user, token, loading, login, logout }), [user, token, loading, login, logout]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
