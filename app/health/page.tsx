@@ -9,7 +9,7 @@ export default function HealthPage() {
     status: number;
     statusText: string;
     contentType?: string | null;
-    data?: any;
+    data?: unknown;
     error?: string;
   };
   const [results, setResults] = useState<Resp[] | null>(null);
@@ -17,6 +17,15 @@ export default function HealthPage() {
   const [loading, setLoading] = useState<boolean>(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [checkedAt, setCheckedAt] = useState<string | null>(null);
+
+  const errToString = (e: unknown): string => {
+    if (e instanceof Error) return e.message;
+    try {
+      return JSON.stringify(e);
+    } catch {
+      return String(e);
+    }
+  };
 
   const run = async () => {
     setLoading(true);
@@ -28,7 +37,7 @@ export default function HealthPage() {
         try {
           const res = await fetch(u, { cache: 'no-store' });
           const ctype = res.headers.get('content-type');
-          let data: any = undefined;
+          let data: unknown = undefined;
           if (ctype && ctype.includes('application/json')) {
             data = await res.json();
           } else {
@@ -43,20 +52,20 @@ export default function HealthPage() {
             contentType: ctype,
             data,
           });
-        } catch (e: any) {
+        } catch (e: unknown) {
           out.push({
             url: u,
             ok: false,
             status: 0,
             statusText: 'NETWORK/JS ERROR',
-            error: String(e?.message || e),
+            error: errToString(e),
           });
         }
       }
       setResults(out);
       setCheckedAt(new Date().toLocaleString());
-    } catch (e: any) {
-      setError(String(e?.message || e));
+    } catch (e: unknown) {
+      setError(errToString(e));
     } finally {
       setLoading(false);
     }
