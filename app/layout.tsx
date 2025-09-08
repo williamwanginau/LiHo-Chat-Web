@@ -1,6 +1,7 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import { AuthProvider } from '../lib/auth';
+import { QueryProvider } from '../lib/query';
 import ToasterHost from '../components/ToasterHost';
 import IconFontLoader from '../components/IconFontLoader';
 
@@ -16,11 +17,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body style={{ fontFamily: 'system-ui, sans-serif' }}>
-        <AuthProvider>
-          <IconFontLoader />
-          <ToasterHost />
-          {children}
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <IconFontLoader />
+            <ToasterHost />
+            {children}
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

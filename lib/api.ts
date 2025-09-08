@@ -129,3 +129,42 @@ export type AuthUser = {
   updatedAt: string;
   lastLoginAt: string | null;
 };
+
+// Rooms + Messages API types
+export type RoomLastMessage = {
+  content: string;
+  createdAt: string;
+};
+
+export type RoomItem = {
+  id: string;
+  name: string;
+  isPrivate: boolean;
+  updatedAt: string;
+  lastMessage?: RoomLastMessage;
+};
+
+export type RoomsListResponse = {
+  items: RoomItem[];
+  nextCursor?: string;
+  hasMore?: boolean;
+  serverTime: string;
+};
+
+export type MessageAuthor = { id: string; name: string };
+export type MessageItem = {
+  id: string;
+  messageId?: string;
+  roomId: string;
+  content: string;
+  createdAt: string;
+  editedAt?: string | null;
+  author: MessageAuthor;
+};
+
+export type MessagesPage = {
+  items: MessageItem[];
+  nextCursor?: string;
+  hasMore: boolean;
+  serverTime: string;
+};
